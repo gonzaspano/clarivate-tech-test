@@ -5,12 +5,12 @@ import { isTimeoutError } from "../isTimeoutError.js";
 
 type Options = {
   apiKey: string;
+  baseUrl: string;
   model: string;
   timeoutMs: number;
   fetch?: typeof globalThis.fetch;
 };
 
-const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const TEXT_TEMPERATURE = 0.3;
 const JSON_TEMPERATURE = 0;
 
@@ -31,7 +31,7 @@ const part = (text: string) => ({ parts: [{ text }] });
 // Gemini takes plain JSON Schema in `responseJsonSchema`, but `$schema` is not part of the accepted subset.
 const withoutMetaSchema = ({ $schema: _ignored, ...schema }: Record<string, unknown>) => schema;
 
-export function makeGeminiClient({ apiKey, model, timeoutMs, fetch = globalThis.fetch }: Options): LlmProvider {
+export function makeGeminiClient({ apiKey, baseUrl, model, timeoutMs, fetch = globalThis.fetch }: Options): LlmProvider {
   // The error messages below never include the key: it only travels in the x-goog-api-key header.
   function statusError(status: number): LlmError {
     if (status === 401 || status === 403) {
@@ -51,7 +51,7 @@ export function makeGeminiClient({ apiKey, model, timeoutMs, fetch = globalThis.
   ): Promise<string> {
     let response: Response;
     try {
-      response = await fetch(`${BASE_URL}/models/${model}:generateContent`, {
+      response = await fetch(`${baseUrl}/models/${model}:generateContent`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify({

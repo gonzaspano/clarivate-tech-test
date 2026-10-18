@@ -20,6 +20,7 @@ const llm =
   env.LLM_PROVIDER === "gemini"
     ? makeGeminiClient({
         apiKey: env.GEMINI_API_KEY!,
+        baseUrl: env.GEMINI_BASE_URL,
         model: env.GEMINI_MODEL,
         timeoutMs: env.LLM_TIMEOUT_MS,
       })

@@ -12,6 +12,7 @@ const envSchema = z.object({
   LLM_PROVIDER: z.enum(["ollama", "gemini"]).default("ollama"),
   // Empty string (e.g. `GEMINI_API_KEY=` from compose or .env) counts as unset.
   GEMINI_API_KEY: z.string().transform((value) => value || undefined).optional(),
+  GEMINI_BASE_URL: z.url().default("https://generativelanguage.googleapis.com/v1beta"),
   GEMINI_MODEL: z.string().min(1).default("gemini-3.8-flash"),
 }).refine((env) => env.LLM_PROVIDER !== "gemini" || env.GEMINI_API_KEY, {
   path: ["GEMINI_API_KEY"],

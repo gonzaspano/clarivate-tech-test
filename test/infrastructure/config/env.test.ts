@@ -12,8 +12,16 @@ describe("loadEnv", () => {
       OLLAMA_MAX_TOKENS: 256,
       LLM_TIMEOUT_MS: 60000,
       LLM_PROVIDER: "ollama",
+      GEMINI_BASE_URL: "https://generativelanguage.googleapis.com/v1beta",
       GEMINI_MODEL: "gemini-3.8-flash",
     });
+  });
+
+  it("overrides the Gemini base URL and rejects invalid ones", () => {
+    expect(loadEnv({ GEMINI_BASE_URL: "https://gateway.example.com/gemini" }).GEMINI_BASE_URL).toBe(
+      "https://gateway.example.com/gemini",
+    );
+    expect(() => loadEnv({ GEMINI_BASE_URL: "not a url" })).toThrow();
   });
 
   describe("LLM provider", () => {

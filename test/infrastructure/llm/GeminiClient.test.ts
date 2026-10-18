@@ -9,8 +9,9 @@ const schema = { $schema: "https://json-schema.org/draft/2020-12/schema", type: 
 const reply = (text: string, extra: Record<string, unknown> = {}) => ({
   candidates: [{ content: { role: "model", parts: [{ text }] }, finishReason: "STOP", ...extra }],
 });
-const make = (fetch: typeof globalThis.fetch, timeoutMs = 1000) =>
-  makeGeminiClient({ apiKey: API_KEY, model: "test-model", timeoutMs, fetch });
+const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+const make = (fetch: typeof globalThis.fetch, timeoutMs = 1000, baseUrl = BASE_URL) =>
+  makeGeminiClient({ apiKey: API_KEY, baseUrl, model: "test-model", timeoutMs, fetch });
 const sentBody = (fetch: ReturnType<typeof stubFetch>) => JSON.parse(fetch.mock.calls[0]![1]!.body as string);
 
 describe("GeminiClient", () => {
@@ -24,6 +25,12 @@ describe("GeminiClient", () => {
       expect(String(url)).not.toContain(API_KEY);
       expect(init!.method).toBe("POST");
       expect(init!.headers).toMatchObject({ "x-goog-api-key": API_KEY, "Content-Type": "application/json" });
+    });
+
+    it("uses the configured base URL", async () => {
+      const fetch = stubFetch(reply("hi"));
+      await make(fetch, 1000, "https://gateway.example.com/gemini").generateText(prompt);
+      expect(fetch.mock.calls[0]![0]).toBe("https://gateway.example.com/gemini/models/test-model:generateContent");
     });
 
     it("sends the system prompt as systemInstruction and the user turn as contents", async () => {
