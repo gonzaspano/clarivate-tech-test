@@ -1,0 +1,46 @@
+services:
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434" # optional: lets you reach Ollama from the host
+    volumes:
+      - ollama:/root/.ollama # model cache, survives restarts
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # One-shot job: downloads the model into the shared volume, then exits.
+  ollama-pull:
+    image: ollama/ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "${OLLAMA_MODEL:-qwen2.5:7b}"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      LLM_TIMEOUT_MS: 120000 # CPU-only inference in Docker (no GPU on Mac) is slow
+    depends_on:
+      ollama-pull:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  ollama:
