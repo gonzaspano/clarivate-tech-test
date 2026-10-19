@@ -148,6 +148,8 @@ The brief's example summary text says "50 users", but the endpoint is specified 
 
 `/users/search` logs one JSON line per search (`search.filter_extracted`) with the query, the extracted filter and the matched count, plus `search.llm_retry` when the model had to be asked again. User records are never logged.
 
+Every HTTP request also logs one `http.request` line when it finishes, with the method, path (query string stripped), status and duration in milliseconds. `/health` is skipped because the Docker healthcheck polls it constantly. Headers and bodies are never logged.
+
 ## Known limitations
 
 - Every request is a new random sample. City queries such as "Charleston" usually return `[]` (roughly 1 in 5,000 generated users is from Charleston). The log shows the extracted filter, so you can confirm the query was understood.

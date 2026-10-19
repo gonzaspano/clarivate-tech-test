@@ -21,4 +21,14 @@ describe("createApp", () => {
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ error: { code: "NOT_FOUND", message: "Route not found" } });
   });
+
+  it("logs malformed JSON bodies as 400 requests, because the request logger runs before the parser", async () => {
+    const { logger, entries } = fakeLogger();
+    await request(createApp(noopUseCases, logger))
+      .post("/users/search")
+      .set("Content-Type", "application/json")
+      .send("{not json");
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.data).toMatchObject({ method: "POST", path: "/users/search", status: 400 });
+  });
 });

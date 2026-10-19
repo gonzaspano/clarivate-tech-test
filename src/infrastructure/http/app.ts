@@ -1,10 +1,12 @@
 import express from "express";
 import type { Logger } from "../../application/ports/Logger.js";
 import { makeErrorHandler } from "./errorHandler.js";
+import { makeRequestLogger } from "./requestLogger.js";
 import { usersRouter, type UserUseCases } from "./routes/users.js";
 
 export function createApp(useCases: UserUseCases, logger: Logger) {
   const app = express();
+  app.use(makeRequestLogger(logger));
   app.use(express.json());
 
   app.get("/health", (_req, res) => {
