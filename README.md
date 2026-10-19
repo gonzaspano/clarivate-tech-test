@@ -2,7 +2,7 @@
 
 Express + TypeScript service over [randomuser.me](https://randomuser.me) with an LLM-powered summary and natural-language search. The LLM runs locally in Ollama by default (no API key needed); Google Gemini is the recommended opt-in provider for the best quality and speed (see [LLM providers](#llm-providers)).
 
-## Quick start
+## Quick start with Ollama
 
 ```bash
 docker compose up --build
@@ -12,6 +12,16 @@ docker compose up --build
 - Docker needs about 6 GB of memory available for Ollama with the 7b model (Docker Desktop: Settings > Resources). Short on RAM? Use the 3b fallback, see [LLM providers](#llm-providers).
 - The API is ready when `api` reports healthy. Check: `curl localhost:3000/health`.
 - Inference is CPU-only inside Docker, so LLM endpoints can take tens of seconds, and `/users/summary` more than a minute on the 7b model (`LLM_TIMEOUT_MS` is 120 s in the compose file). A client or proxy with a 60 s timeout will cut it off.
+
+## Quick start with Gemini
+
+To use Gemini: create a key in [Google AI Studio](https://aistudio.google.com/apikey), put `GEMINI_API_KEY=...` in a local `.env` (git-ignored; never in `.env.example`), then:
+
+```bash
+LLM_PROVIDER=gemini docker compose up --build --no-deps api   # Docker: starts only the API, no Ollama
+LLM_PROVIDER=gemini npm run dev                               # no Docker (dev loads .env)
+```
+
 
 ## Endpoints
 
@@ -65,13 +75,6 @@ Recommended: **Gemini** for the best quality and speed. Default: **Ollama `qwen2
 Measured with the brief's example queries on a CPU-only Docker setup; your numbers will vary.
 
 **Gemini free tier.** On our project the AI Studio rate-limit page shows 5 requests/minute and 20 requests/day. A `429` means you hit the quota, not a bug. Limits are per project and the daily reset is at midnight Pacific; check your own on the AI Studio rate-limit page. The default `GEMINI_MODEL` can be changed to a model with higher limits.
-
-To use Gemini: create a key in [Google AI Studio](https://aistudio.google.com/apikey), put `GEMINI_API_KEY=...` in a local `.env` (git-ignored; never in `.env.example`), then:
-
-```bash
-LLM_PROVIDER=gemini docker compose up --build --no-deps api   # Docker: starts only the API, no Ollama
-LLM_PROVIDER=gemini npm run dev                               # no Docker (dev loads .env)
-```
 
 Switching providers was a one-adapter change: `GeminiClient` implements the same `LlmProvider` port as `OllamaClient`, and `main.ts` picks one. Use cases and domain are untouched.
 
